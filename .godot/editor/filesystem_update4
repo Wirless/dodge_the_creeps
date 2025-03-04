@@ -2,3 +2,8 @@ res://hud.tscn
 res://main.tscn
 res://mob.tscn
 res://player.tscn
+res://hud.gd
+res://mob.gd
+res://player.gd
+res://health_bar.gd
+res://health_bar.gd.txt

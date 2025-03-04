@@ -21,6 +21,10 @@ func update_score(score):
 	$ScoreLabel.text = str(score)
 
 
+func update_health(new_health):
+	$HealthLabel.text = "Health: %d" % new_health
+
+
 func _on_StartButton_pressed():
 	$StartButton.hide()
 	start_game.emit()

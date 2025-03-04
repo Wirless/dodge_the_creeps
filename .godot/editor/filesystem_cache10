@@ -1,15 +1,17 @@
 ea4bc82a6ad023ab7ee23ee620429895
-::res://::1741115640
-hud.gd::GDScript/GDScript::493422067475237954::1741115101::0::1::::<>CanvasLayer<><>0<>0<><>::
-hud.tscn::PackedScene::4947129736321201862::1741115641::0::1::::<><><>0<>0<><>::uid://hbaubki6n8ks::::res://hud.gd<>uid://cit6gwe5px1q8::::res://fonts/Xolonium-Regular.ttf
+::res://::1741117271
+hud.gd::GDScript::493422067475237954::1741116324::0::1::::<>CanvasLayer<><>0<>0<><>::
+hud.tscn::PackedScene::4947129736321201862::1741117180::0::1::::<><><>0<>0<><>::uid://hbaubki6n8ks::::res://hud.gd<>uid://cit6gwe5px1q8::::res://fonts/Xolonium-Regular.ttf
 icon.webp::CompressedTexture2D/CompressedTexture2D::3626017087650301524::1741115101::1741115630::1::::<><><>0<>0<>c6c2d2a409d3db208320ab54c2d08e4f<>res://.godot/imported/icon.webp-e94f9a68b0f625a567a797079e4d325f.ctex::
 main.gd::GDScript/GDScript::390550194619459109::1741115101::0::1::::<>Node<><>0<>0<><>::
-main.tscn::PackedScene::6469066510429512572::1741115642::0::1::::<><><>0<>0<><>::uid://ftgkmf1pxrfp::::res://main.gd<>uid://rkdnhqgf2hpj::::res://mob.tscn<>uid://4vwrqjegqwpj::::res://player.tscn<>uid://ccqoreueuxdb7::::res://hud.tscn<>uid://q2pf4fr8d0ks::::res://art/House In a Forest Loop.ogg<>uid://dw26fpygeag8o::::res://art/gameover.wav
-mob.gd::GDScript/GDScript::2050687765499545026::1741115101::0::1::::<>RigidBody2D<><>0<>0<><>::
-mob.tscn::PackedScene::1214059878346897035::1741115642::0::1::::<><><>0<>0<><>::uid://4hmr7iep5a0q::::res://mob.gd<>uid://yqglrrsx7j1f::::res://art/enemyFlyingAlt_1.png<>uid://bpot8awhdn6ph::::res://art/enemyFlyingAlt_2.png<>uid://bu4221t7qpa7d::::res://art/enemyWalking_1.png<>uid://booij5t7h4efb::::res://art/enemyWalking_2.png<>uid://5lvm88ij4jqn::::res://art/enemySwimming_1.png<>uid://bng45cvsgufqc::::res://art/enemySwimming_2.png
-player.gd::GDScript/GDScript::4239360029440324895::1741115101::0::1::::<>Area2D<><>0<>0<><>::
-player.tscn::PackedScene::2080195385142696447::1741115642::0::1::::<><><>0<>0<><>::uid://b1ntv1gu2ieip::::res://player.gd<>uid://ftkxr8r4qghp::::res://art/playerGrey_walk1.png<>uid://couyhcegeihme::::res://art/playerGrey_walk2.png<>uid://b4yyoafu8bi0q::::res://art/playerGrey_up1.png<>uid://bko65a0nd66st::::res://art/playerGrey_up2.png
+main.tscn::PackedScene::6469066510429512572::1741117180::0::1::::<><><>0<>0<><>::uid://ftgkmf1pxrfp::::res://main.gd<>uid://rkdnhqgf2hpj::::res://mob.tscn<>uid://4vwrqjegqwpj::::res://player.tscn<>uid://ccqoreueuxdb7::::res://hud.tscn<>uid://q2pf4fr8d0ks::::res://art/House In a Forest Loop.ogg<>uid://dw26fpygeag8o::::res://art/gameover.wav
+mob.gd::GDScript::2050687765499545026::1741117144::0::1::::<>RigidBody2D<><>0<>0<><>::
+mob.tscn::PackedScene::1214059878346897035::1741117180::0::1::::<><><>0<>0<><>::uid://4hmr7iep5a0q::::res://mob.gd<>uid://yqglrrsx7j1f::::res://art/enemyFlyingAlt_1.png<>uid://bpot8awhdn6ph::::res://art/enemyFlyingAlt_2.png<>uid://bu4221t7qpa7d::::res://art/enemyWalking_1.png<>uid://booij5t7h4efb::::res://art/enemyWalking_2.png<>uid://5lvm88ij4jqn::::res://art/enemySwimming_1.png<>uid://bng45cvsgufqc::::res://art/enemySwimming_2.png
+player.gd::GDScript::4239360029440324895::1741117177::0::1::::<>Area2D<><>0<>0<><>::
+player.tscn::PackedScene::2080195385142696447::1741117180::0::1::::<><><>0<>0<><>::uid://b1ntv1gu2ieip::::res://player.gd<>uid://ftkxr8r4qghp::::res://art/playerGrey_walk1.png<>uid://couyhcegeihme::::res://art/playerGrey_walk2.png<>uid://b4yyoafu8bi0q::::res://art/playerGrey_up1.png<>uid://bko65a0nd66st::::res://art/playerGrey_up2.png
 README.md::TextFile/TextFile::-1::1741115101::0::1::::<><><>0<>0<><>::
+health_bar.gd::GDScript::7363835943479533761::1741117083::0::1::::<>Node2D<><>0<>0<><>::
+sound.ogg::AudioStreamOggVorbis::733001348403405203::1741117271::1741117271::1::::<><><>0<>0<>8d6d0b307e74cc42400c6eb0377a397f<>res://.godot/imported/sound.ogg-198119bf89a90e1ab97cfd35e15a5239.oggvorbisstr::
 ::res://art/::1741115630
 enemyFlyingAlt_1.png::CompressedTexture2D/CompressedTexture2D::1717947157075756173::1741115101::1741115630::1::::<><><>0<>0<>963e7f51c2dc334650c3a219639b9a1c<>res://.godot/imported/enemyFlyingAlt_1.png-559f599b16c69b112c1b53f6332e9489.ctex::
 enemyFlyingAlt_2.png::CompressedTexture2D/CompressedTexture2D::3469367215190149497::1741115101::1741115630::1::::<><><>0<>0<>fc8d6296dddab64c989bc153a0812996<>res://.godot/imported/enemyFlyingAlt_2.png-31dc7310eda6e1b721224f3cd932c076.ctex::
