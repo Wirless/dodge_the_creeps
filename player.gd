@@ -17,6 +17,13 @@ var damage_cooldown = 1.0 # Damage cooldown in seconds
 var can_attack = true
 var attack_cooldown = 0.5 # Attack cooldown in seconds
 var is_dead = false
+@export var contact_damage = 5      # Initial damage when monster touches player
+@export var dot_damage = 5          # Damage over time while in monster radius
+@export var dot_interval = 2.0      # Seconds between damage ticks
+var in_contact_with_mobs = {}       # Track mob contact time and timers
+var current_level = 1
+var current_exp = 0
+var exp_to_next_level = 125  # Initial exp needed for level 1->2
 
 func _ready():
 	screen_size = get_viewport_rect().size
@@ -26,6 +33,12 @@ func _ready():
 	var health_bar = preload("res://health_bar.gd").new()
 	add_child(health_bar)
 	health_bar.name = "HealthBar"
+	
+	# Create exp bar
+	var exp_bar = preload("res://exp_bar.gd").new()
+	add_child(exp_bar)
+	exp_bar.name = "ExpBar"
+	update_exp_bar()
 	
 	# Create attack area if it doesn't exist
 	if not has_node("AttackArea"):
@@ -45,6 +58,9 @@ func _ready():
 		var shape = ConvexPolygonShape2D.new()
 		shape.points = create_cone_points(attack_radius, attack_angle)
 		$AttackArea/CollisionShape2D.shape = shape
+	
+	# Initialize health bar with correct values
+	$HealthBar.update_health(health, maxhealth)
 
 func _process(delta):
 	var velocity = Vector2.ZERO # The player's movement vector.
@@ -95,12 +111,16 @@ func _process(delta):
 func start(pos):
 	position = pos
 	rotation = 0
-	maxhealth = 100 # reset too
-	health = 100 # Reset health when starting new game
+	maxhealth = 100
+	health = 100
+	current_level = 1
+	current_exp = 0
+	exp_to_next_level = 125
 	can_take_damage = true
 	show()
 	$CollisionShape2D.disabled = false
 	$HealthBar.update_health(health, 100)
+	update_exp_bar()
 
 func _on_body_entered(body):
 	if body.is_in_group("mobs") and can_take_damage:
@@ -114,9 +134,9 @@ func take_damage(amount):
 	if is_dead:
 		return
 		
-	health -= amount
+	health = max(0, health - amount)  # Prevent negative health
 	health_changed.emit(health)
-	$HealthBar.update_health(health, 100)
+	$HealthBar.update_health(health, maxhealth)
 	
 	if health <= 0:
 		die()
@@ -206,3 +226,61 @@ func die():
 	hide()
 	hit.emit()
 	$CollisionShape2D.set_deferred("disabled", true)
+
+# Add a heal function if needed
+func heal(amount):
+	if is_dead:
+		return
+		
+	health = min(maxhealth, health + amount)  # Don't exceed max health
+	health_changed.emit(health)
+	$HealthBar.update_health(health, maxhealth)
+
+func _physics_process(_delta):
+	if is_dead:
+		return
+		
+	var current_time = Time.get_ticks_msec()
+	
+	# Check each mob we're in contact with
+	for mob in in_contact_with_mobs.keys():
+		if !is_instance_valid(mob):
+			in_contact_with_mobs.erase(mob)
+			continue
+			
+		var contact_data = in_contact_with_mobs[mob]
+		
+		# Check if mob is within 8 pixel radius of player center
+		var distance = global_position.distance_to(mob.global_position)
+		if distance <= 8:  # 8 pixel radius check
+			# Initial hit after entering radius
+			if !contact_data["initial_hit"] and can_take_damage:
+				take_damage(mob.damage)  # Use mob's damage value
+				contact_data["initial_hit"] = true
+				contact_data["last_damage_time"] = current_time
+			
+			# DoT damage every interval
+			var time_since_last_damage = (current_time - contact_data["last_damage_time"]) / 1000.0
+			if time_since_last_damage >= dot_interval and can_take_damage:
+				take_damage(dot_damage)
+				contact_data["last_damage_time"] = current_time
+		else:
+			# Reset contact if mob moves outside radius
+			contact_data["initial_hit"] = false
+
+func gain_exp(amount):
+	current_exp += amount
+	while current_exp >= exp_to_next_level:
+		level_up()
+	update_exp_bar()
+
+func level_up():
+	current_exp -= exp_to_next_level
+	current_level += 1
+	# Increase exp needed for next level by 10%
+	exp_to_next_level = int(exp_to_next_level * 1.1)
+	# Could add level up effects/bonuses here
+
+func update_exp_bar():
+	if has_node("ExpBar"):
+		$ExpBar.update_exp(current_exp, exp_to_next_level, current_level)

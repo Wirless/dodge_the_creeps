@@ -27,6 +27,13 @@ grow_vertical = 2
 color = Color(0.219608, 0.372549, 0.380392, 1)
 
 [node name="Player" parent="." instance=ExtResource("3_veqnc")]
+speed = 400
+attack_radius = 80.0
+attack_damage = 25.0
+attack_angle = 140.0
+contact_damage = 5
+dot_damage = 5
+dot_interval = 2.0
 
 [node name="MobTimer" type="Timer" parent="."]
 wait_time = 0.5
