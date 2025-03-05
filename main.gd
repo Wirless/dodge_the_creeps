@@ -10,7 +10,6 @@ func game_over():
 	$Music.stop()
 	$DeathSound.play()
 
-
 func new_game():
 	get_tree().call_group(&"mobs", &"queue_free")
 	score = 0

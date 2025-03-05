@@ -4,9 +4,9 @@ signal hit
 signal health_changed(new_health) # New signal for health updates
 
 @export var speed = 400 # How fast the player will move (pixels/sec).
-@export var attack_radius = 100.0 # Radius of the attack
+@export var attack_radius = 80.0 # Radius of the attack
 @export var attack_damage = 25.0 # Damage per attack
-@export var attack_angle = 45.0 # Angle of the cone in degrees
+@export var attack_angle = 140.0 # Angle of the cone in degrees
 var screen_size # Size of the game window.
 var maxhealth = 100 # Player's health
 var health = 100 # current health
@@ -48,6 +48,7 @@ func _ready():
 
 func _process(delta):
 	var velocity = Vector2.ZERO # The player's movement vector.
+	# we can increment player speed here.
 	if Input.is_action_pressed("move_right"):
 		velocity.x += 1
 	if Input.is_action_pressed("move_left"):
@@ -66,22 +67,30 @@ func _process(delta):
 	position += velocity * delta
 	position = position.clamp(Vector2.ZERO, screen_size)
 
+	# Update player facing direction based on mouse position
+	var mouse_pos = get_global_mouse_position()
+	var direction_to_mouse = (mouse_pos - global_position).normalized()
+	
+	# Update sprite direction based on mouse position
+	if abs(direction_to_mouse.x) > abs(direction_to_mouse.y):
+		# Horizontal movement animation
+		$AnimatedSprite2D.animation = "right"
+		$AnimatedSprite2D.flip_h = direction_to_mouse.x < 0
+		$AnimatedSprite2D.flip_v = false
+		rotation = 0  # Reset rotation
+	else:
+		# Vertical movement animation
+		$AnimatedSprite2D.animation = "up"
+		$AnimatedSprite2D.flip_v = direction_to_mouse.y > 0
+		$AnimatedSprite2D.flip_h = false
+		rotation = 0  # Reset rotation
+
 	# Handle attack with left mouse button
 	if Input.is_action_just_pressed("attack") and can_attack:
 		perform_attack()
 		can_attack = false
 		await get_tree().create_timer(attack_cooldown).timeout
 		can_attack = true
-
-	# Handle sprite animations
-	if velocity.x != 0:
-		$AnimatedSprite2D.animation = "right"
-		$AnimatedSprite2D.flip_v = false
-		$Trail.rotation = 0
-		$AnimatedSprite2D.flip_h = velocity.x < 0
-	elif velocity.y != 0:
-		$AnimatedSprite2D.animation = "up"
-		rotation = PI if velocity.y > 0 else 0
 
 func start(pos):
 	position = pos
@@ -113,23 +122,17 @@ func take_damage(amount):
 		die()
 
 func perform_attack():
+	# Get mouse position and calculate direction
+	var mouse_pos = get_global_mouse_position()
+	var direction = (mouse_pos - global_position).normalized()
+	
 	# Create visual effect
 	var effect = create_attack_effect()
+	effect.rotation = direction.angle()  # Rotate effect to face mouse
 	add_child(effect)
 	
-	# Update attack area rotation to match player's direction
-	var direction = Vector2.ZERO
-	if Input.is_action_pressed("move_right"):
-		direction.x = 1
-	elif Input.is_action_pressed("move_left"):
-		direction.x = -1
-	elif Input.is_action_pressed("move_down"):
-		direction.y = 1
-	elif Input.is_action_pressed("move_up"):
-		direction.y = -1
-	
-	if direction != Vector2.ZERO:
-		$AttackArea.rotation = direction.angle()
+	# Update attack area rotation to face mouse cursor
+	$AttackArea.rotation = direction.angle()
 	
 	# Check for mobs in attack area
 	var mobs = $AttackArea.get_overlapping_bodies()
@@ -143,36 +146,40 @@ func perform_attack():
 
 func create_cone_points(radius, angle_degrees):
 	var points = PackedVector2Array()
-	# Convert angle to radians
 	var angle_rad = deg_to_rad(angle_degrees)
+	var num_points = 8  # Increased points for smoother arc
 	
 	# Add center point
 	points.push_back(Vector2.ZERO)
 	
-	# Add points to create cone shape
-	points.push_back(Vector2(radius, -radius * tan(angle_rad/2)))
-	points.push_back(Vector2(radius, radius * tan(angle_rad/2)))
+	# Create arc points
+	for i in range(num_points + 1):
+		var t = float(i) / num_points
+		var current_angle = -angle_rad/2 + angle_rad * t
+		var point = Vector2(
+			radius * cos(current_angle),
+			radius * sin(current_angle)
+		)
+		points.push_back(point)
 	
 	return points
 
 func create_attack_effect():
 	var effect = Node2D.new()
 	
-	# Create cone shape
-	var shape = ConvexPolygonShape2D.new()
-	shape.points = create_cone_points(attack_radius, attack_angle)
-	
 	# Create visual mask
 	var sprite = Sprite2D.new()
 	var texture = create_cone_texture(attack_radius, attack_angle)
 	sprite.texture = texture
-	sprite.modulate = Color(1, 1, 1, 1)
-	effect.add_child(sprite)
+	sprite.modulate = Color(1, 1, 1, 0.7)  # Slightly transparent white
 	
-	# Create fade out animation
+	# Add a smooth fade out and slight scaling effect
 	var tween = create_tween()
-	tween.tween_property(sprite, "modulate:a", 0.0, 0.5)
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
+	tween.tween_property(sprite, "scale", Vector2(1.2, 1.2), 0.3)
 	
+	effect.add_child(sprite)
 	return effect
 
 func create_cone_texture(radius, angle_degrees):
@@ -182,16 +189,17 @@ func create_cone_texture(radius, angle_degrees):
 	
 	for x in range(image.get_width()):
 		for y in range(image.get_height()):
-			var point = Vector2(x, y)
-			var distance = point.distance_to(center)
-			var angle = point.angle_to_point(center)
+			var point = Vector2(x - radius, y - radius)  # Centered coordinates
+			var distance = point.length()
+			var angle = point.angle()
 			
 			if distance <= radius and abs(angle) <= angle_rad/2:
-				var alpha = 1.0 - (distance / radius)
+				var alpha = 1.0 - (distance / radius) * 0.5  # Softer fade
+				var edge_fade = 1.0 - abs(angle) / (angle_rad/2)  # Fade at edges
+				alpha *= edge_fade
 				image.set_pixel(x, y, Color(1, 1, 1, alpha))
 	
-	var texture = ImageTexture.create_from_image(image)
-	return texture
+	return ImageTexture.create_from_image(image)
 
 func die():
 	is_dead = true

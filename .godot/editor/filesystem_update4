@@ -1,10 +1,7 @@
-res://hud.tscn
 res://main.tscn
+res://hud.tscn
 res://mob.tscn
 res://player.tscn
-res://hud.gd
+res://main.gd
 res://mob.gd
 res://player.gd
-res://health_bar.gd
-res://health_bar.gd.txt
-res://main.gd
