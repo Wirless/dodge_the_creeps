@@ -4,6 +4,8 @@ var width = 500  # Width of exp bar
 var height = 30  # Height of exp bar
 var margin_top = 50  # Margin from top of screen
 var level_box_size = 50  # Size of the level display box
+var scroll_offset = 0.0  # For sliding animation
+var scroll_speed = 30.0  # Pixels per second
 
 # For the textures
 var rng = RandomNumberGenerator.new()
@@ -15,6 +17,13 @@ func _ready():
 	setup_noise_textures()
 	update_position()
 
+func _process(delta):
+	# Update scroll offset for sliding animation
+	scroll_offset += delta * scroll_speed
+	if scroll_offset >= width:
+		scroll_offset = 0
+	queue_redraw()
+
 func setup_noise_textures():
 	# For level box
 	var noise = FastNoiseLite.new()
@@ -25,13 +34,13 @@ func setup_noise_textures():
 	noise_texture.width = level_box_size
 	noise_texture.height = level_box_size
 	
-	# For exp bar - make it full width to avoid stretching
+	# For exp bar - make it twice the width for seamless scrolling
 	var exp_noise = FastNoiseLite.new()
 	exp_noise.noise_type = FastNoiseLite.TYPE_PERLIN
 	exp_noise.seed = randi()
-	exp_noise.frequency = 0.02  # Lower frequency for better wood effect
+	exp_noise.frequency = 0.02
 	exp_bar_noise.noise = exp_noise
-	exp_bar_noise.width = width
+	exp_bar_noise.width = width * 2  # Double width for scrolling
 	exp_bar_noise.height = height
 
 func update_position():
@@ -43,38 +52,41 @@ func update_position():
 
 func _draw():
 	# Draw base dark wood texture
-	var dark_wood = Color(0.2, 0.1, 0.05, 0.9)  # Very dark brown
-	draw_texture_rect(
+	var dark_wood = Color(0.2, 0.1, 0.05, 0.9)
+	
+	# Draw scrolling background (dark)
+	var source_rect = Rect2(scroll_offset, 0, width, height)
+	draw_texture_rect_region(
 		exp_bar_noise,
 		Rect2(0, 0, width, height),
-		false,
+		source_rect,
 		dark_wood
 	)
 	
-	# Draw the filled portion
+	# Draw the filled portion with scrolling
 	if exp_to_next > 0:
 		var exp_width = (width * current_exp) / exp_to_next
 		var progress = float(current_exp) / float(exp_to_next)
 		
 		# Calculate brighter color based on progress
 		var fill_color = Color(
-			lerp(0.4, 0.8, progress),  # R: 0.4 to 0.8
-			lerp(0.2, 0.4, progress),  # G: 0.2 to 0.4
-			lerp(0.1, 0.2, progress),  # B: 0.1 to 0.2
+			lerp(0.4, 0.8, progress),
+			lerp(0.2, 0.4, progress),
+			lerp(0.1, 0.2, progress),
 			0.9
 		)
 		
-		# Create a clipped region for the filled portion
-		var clip_rect = Rect2(0, 0, exp_width, height)
+		# Draw scrolling filled portion
+		var fill_source_rect = Rect2(scroll_offset, 0, exp_width, height)
 		draw_texture_rect_region(
 			exp_bar_noise,
-			clip_rect,
-			clip_rect,
+			Rect2(0, 0, exp_width, height),
+			fill_source_rect,
 			fill_color
 		)
 	
 	# Draw border for exp bar
-	var border_color = Color(0.3, 0.15, 0.0)  # Dark brown border
+	var border_color = Color(0.3, 0.15, 0.0)
 	draw_rect(Rect2(0, 0, width, height), border_color, false, 2.0)
 	
 	# Draw level box below the exp bar
