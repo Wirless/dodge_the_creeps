@@ -5,7 +5,8 @@ var height = 30  # Height of exp bar
 var margin_top = 50  # Margin from top of screen
 var level_box_size = 50  # Size of the level display box
 var scroll_offset = 0.0  # For sliding animation
-var scroll_speed = 30.0  # Pixels per second
+var base_scroll_speed = 30.0  # Base speed when empty
+var max_scroll_speed = 120.0  # Maximum speed when full
 
 # For the textures
 var rng = RandomNumberGenerator.new()
@@ -18,8 +19,12 @@ func _ready():
 	update_position()
 
 func _process(delta):
-	# Update scroll offset for sliding animation
-	scroll_offset += delta * scroll_speed
+	# Calculate current scroll speed based on exp bar fill percentage
+	var fill_percent = float(current_exp) / float(exp_to_next) if exp_to_next > 0 else 0
+	var current_scroll_speed = lerp(base_scroll_speed, max_scroll_speed, fill_percent)
+	
+	# Update scroll offset with dynamic speed
+	scroll_offset += delta * current_scroll_speed
 	if scroll_offset >= width:
 		scroll_offset = 0
 	queue_redraw()
@@ -54,6 +59,9 @@ func _draw():
 	# Draw base dark wood texture
 	var dark_wood = Color(0.2, 0.1, 0.05, 0.9)
 	
+	# Calculate fill percentage for color and speed
+	var fill_percent = float(current_exp) / float(exp_to_next) if exp_to_next > 0 else 0
+	
 	# Draw scrolling background (dark)
 	var source_rect = Rect2(scroll_offset, 0, width, height)
 	draw_texture_rect_region(
@@ -66,13 +74,12 @@ func _draw():
 	# Draw the filled portion with scrolling
 	if exp_to_next > 0:
 		var exp_width = (width * current_exp) / exp_to_next
-		var progress = float(current_exp) / float(exp_to_next)
 		
 		# Calculate brighter color based on progress
 		var fill_color = Color(
-			lerp(0.4, 0.8, progress),
-			lerp(0.2, 0.4, progress),
-			lerp(0.1, 0.2, progress),
+			lerp(0.4, 0.8, fill_percent),
+			lerp(0.2, 0.4, fill_percent),
+			lerp(0.1, 0.2, fill_percent),
 			0.9
 		)
 		
@@ -84,6 +91,10 @@ func _draw():
 			fill_source_rect,
 			fill_color
 		)
+		
+		# Optional: Add a glow effect when near full
+		if fill_percent > 0.8:
+			var glow_color = fill_color
 	
 	# Draw border for exp bar
 	var border_color = Color(0.3, 0.15, 0.0)
