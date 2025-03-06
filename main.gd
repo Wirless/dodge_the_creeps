@@ -25,25 +25,32 @@ func _on_MobTimer_timeout():
 	var mob = mob_scene.instantiate()
 
 	# Choose a random location on Path2D.
-	var mob_spawn_location = get_node(^"MobPath/MobSpawnLocation")
+	var mob_spawn_location = get_node("MobPath/MobSpawnLocation")
 	mob_spawn_location.progress = randi()
 
 	# Set the mob's position to a random location.
-	mob.position = mob_spawn_location.position
-
-	# Set the mob's direction perpendicular to the path direction.
-	var direction = mob_spawn_location.rotation + PI / 2
-
-	# Add some randomness to the direction.
-	direction += randf_range(-PI / 4, PI / 4)
-	mob.rotation = direction
-
-	# Choose the velocity for the mob.
-	var velocity = Vector2(randf_range(150.0, 250.0), 0.0)
-	mob.linear_velocity = velocity.rotated(direction)
-
-	# Spawn the mob by adding it to the Main scene.
-	add_child(mob)
+	var spawn_position = mob_spawn_location.position
+	
+	# Check if spawn position is too close to other mobs
+	var can_spawn = true
+	for existing_mob in get_tree().get_nodes_in_group("mobs"):
+		if existing_mob.position.distance_to(spawn_position) < 30:  # Increased spawn separation
+			can_spawn = false
+			break
+	
+	if can_spawn:
+		mob.position = spawn_position
+		
+		# Set initial velocity towards player, considering other mobs
+		var player = get_node("Player")
+		if player:
+			var direction = (player.position - spawn_position).normalized()
+			mob.linear_velocity = direction * mob.chase_speed
+		
+		# Spawn the mob
+		add_child(mob)
+	else:
+		mob.queue_free()
 
 func _on_ScoreTimer_timeout():
 	score += 1

@@ -27,6 +27,7 @@ var exp_to_next_level = 125  # Initial exp needed for level 1->2
 var hit_counter = 0  # Track number of hits
 var base_attack_radius = 80.0  # Store the base attack radius
 @onready var attack_sound = preload("res://hit.ogg")
+@onready var damage_sound = preload("res://hits2.ogg")
 
 func _ready():
 	screen_size = get_viewport_rect().size
@@ -71,6 +72,12 @@ func _ready():
 	audio_player.name = "AttackSound"
 	audio_player.stream = attack_sound
 	add_child(audio_player)
+	
+	# Create damage sound player
+	var damage_audio = AudioStreamPlayer.new()
+	damage_audio.name = "DamageSound"
+	damage_audio.stream = damage_sound
+	add_child(damage_audio)
 
 func _process(delta):
 	var velocity = Vector2.ZERO # The player's movement vector.
@@ -134,16 +141,28 @@ func start(pos):
 
 func _on_body_entered(body):
 	if body.is_in_group("mobs") and can_take_damage:
-		take_damage(4)
-		can_take_damage = false
-		# Start damage cooldown timer
-		await get_tree().create_timer(damage_cooldown).timeout
-		can_take_damage = true
+		# Start tracking this mob's contact
+		if not in_contact_with_mobs.has(body):
+			in_contact_with_mobs[body] = {
+				"initial_hit": false,
+				"last_damage_time": 0,
+				"in_range": true,
+				"time_out_of_range": 0
+			}
+
+func _on_body_exited(body):
+	if body.is_in_group("mobs"):
+		if in_contact_with_mobs.has(body):
+			in_contact_with_mobs[body]["in_range"] = false
+			in_contact_with_mobs[body]["time_out_of_range"] = Time.get_ticks_msec()
 
 func take_damage(amount):
 	if is_dead:
 		return
 		
+	# Play damage sound
+	$DamageSound.play()
+	
 	health = max(0, health - amount)
 	health_changed.emit(health)
 	$HealthBar.update_health(health, maxhealth)
@@ -282,20 +301,29 @@ func _physics_process(_delta):
 		# Check if mob is within 8 pixel radius of player center
 		var distance = global_position.distance_to(mob.global_position)
 		if distance <= 8:  # 8 pixel radius check
+			contact_data["in_range"] = true
+			
 			# Initial hit after entering radius
 			if !contact_data["initial_hit"] and can_take_damage:
 				take_damage(mob.damage)  # Use mob's damage value
 				contact_data["initial_hit"] = true
 				contact_data["last_damage_time"] = current_time
 			
-			# DoT damage every interval
-			var time_since_last_damage = (current_time - contact_data["last_damage_time"]) / 1000.0
-			if time_since_last_damage >= dot_interval and can_take_damage:
-				take_damage(dot_damage)
-				contact_data["last_damage_time"] = current_time
+			# DoT damage every interval if we've been in range long enough
+			if contact_data["initial_hit"] and can_take_damage:
+				var time_since_last_damage = (current_time - contact_data["last_damage_time"]) / 1000.0
+				if time_since_last_damage >= dot_interval:
+					take_damage(dot_damage)
+					contact_data["last_damage_time"] = current_time
 		else:
-			# Reset contact if mob moves outside radius
-			contact_data["initial_hit"] = false
+			if contact_data["in_range"]:
+				contact_data["in_range"] = false
+				contact_data["time_out_of_range"] = current_time
+			
+			# Reset initial hit if out of range for 5 seconds
+			var time_out_of_range = (current_time - contact_data["time_out_of_range"]) / 1000.0
+			if time_out_of_range >= 5.0:
+				contact_data["initial_hit"] = false
 
 func gain_exp(amount):
 	current_exp += amount
