@@ -24,6 +24,8 @@ var in_contact_with_mobs = {}       # Track mob contact time and timers
 var current_level = 1
 var current_exp = 0
 var exp_to_next_level = 125  # Initial exp needed for level 1->2
+var hit_counter = 0  # Track number of hits
+var base_attack_radius = 80.0  # Store the base attack radius
 
 func _ready():
 	screen_size = get_viewport_rect().size
@@ -47,6 +49,7 @@ func _ready():
 		add_child(attack_area)
 		
 		var collision_shape = CollisionShape2D.new()
+		collision_shape.name = "CollisionShape2D"
 		var shape = ConvexPolygonShape2D.new()
 		# Create cone shape points
 		var points = create_cone_points(attack_radius, attack_angle)
@@ -134,25 +137,39 @@ func take_damage(amount):
 	if is_dead:
 		return
 		
-	health = max(0, health - amount)  # Prevent negative health
+	health = max(0, health - amount)
 	health_changed.emit(health)
 	$HealthBar.update_health(health, maxhealth)
+	
+	# Spawn damage number
+	spawn_damage_number(amount)
 	
 	if health <= 0:
 		die()
 
 func perform_attack():
+	# Increment hit counter
+	hit_counter += 1
+	
+	# Every third hit gets bonus range
+	var current_radius = attack_radius
+	if hit_counter % 3 == 0:
+		current_radius += 50.0
+	
 	# Get mouse position and calculate direction
 	var mouse_pos = get_global_mouse_position()
 	var direction = (mouse_pos - global_position).normalized()
 	
-	# Create visual effect
-	var effect = create_attack_effect()
-	effect.rotation = direction.angle()  # Rotate effect to face mouse
+	# Create visual effect with current radius
+	var effect = create_attack_effect(current_radius)
+	effect.rotation = direction.angle()
 	add_child(effect)
 	
-	# Update attack area rotation to face mouse cursor
+	# Update attack area rotation and shape for this attack
 	$AttackArea.rotation = direction.angle()
+	var shape = ConvexPolygonShape2D.new()
+	shape.points = create_cone_points(current_radius, attack_angle)
+	$AttackArea/CollisionShape2D.shape = shape
 	
 	# Check for mobs in attack area
 	var mobs = $AttackArea.get_overlapping_bodies()
@@ -163,6 +180,27 @@ func perform_attack():
 	# Remove effect after animation
 	await get_tree().create_timer(0.5).timeout
 	effect.queue_free()
+	
+	# Reset attack area to base radius
+	if hit_counter % 3 == 0:
+		shape.points = create_cone_points(attack_radius, attack_angle)
+		$AttackArea/CollisionShape2D.shape = shape
+
+# Modified to accept radius parameter
+func create_attack_effect(current_radius):
+	var effect = Node2D.new()
+	var sprite = Sprite2D.new()
+	var texture = create_cone_texture(current_radius, attack_angle)
+	sprite.texture = texture
+	sprite.modulate = Color(1, 1, 1, 0.7)
+	
+	var tween = create_tween()
+	tween.set_parallel(true)
+	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
+	tween.tween_property(sprite, "scale", Vector2(1.2, 1.2), 0.3)
+	
+	effect.add_child(sprite)
+	return effect
 
 func create_cone_points(radius, angle_degrees):
 	var points = PackedVector2Array()
@@ -183,24 +221,6 @@ func create_cone_points(radius, angle_degrees):
 		points.push_back(point)
 	
 	return points
-
-func create_attack_effect():
-	var effect = Node2D.new()
-	
-	# Create visual mask
-	var sprite = Sprite2D.new()
-	var texture = create_cone_texture(attack_radius, attack_angle)
-	sprite.texture = texture
-	sprite.modulate = Color(1, 1, 1, 0.7)  # Slightly transparent white
-	
-	# Add a smooth fade out and slight scaling effect
-	var tween = create_tween()
-	tween.set_parallel(true)
-	tween.tween_property(sprite, "modulate:a", 0.0, 0.3)
-	tween.tween_property(sprite, "scale", Vector2(1.2, 1.2), 0.3)
-	
-	effect.add_child(sprite)
-	return effect
 
 func create_cone_texture(radius, angle_degrees):
 	var image = Image.create(radius * 2, radius * 2, false, Image.FORMAT_RGBA8)
@@ -284,3 +304,30 @@ func level_up():
 func update_exp_bar():
 	if has_node("ExpBar"):
 		$ExpBar.update_exp(current_exp, exp_to_next_level, current_level)
+
+# Add this new function for damage numbers
+func spawn_damage_number(amount):
+	var damage_label = Label.new()
+	damage_label.text = str(amount)
+	damage_label.add_theme_color_override("font_color", Color(1, 0, 0))  # Red color
+	damage_label.add_theme_font_size_override("font_size", 32)  # Doubled from 16 to 32
+	
+	# Position slightly above player
+	damage_label.position = Vector2(-20, -20)  # Offset from player center
+	add_child(damage_label)
+	
+	# Create animation
+	var tween = create_tween()
+	tween.set_parallel(true)
+	
+	# Move up - doubled from 50 to 100 pixels
+	tween.tween_property(damage_label, "position:y", 
+		damage_label.position.y - 100, 1.0)  # Move up 100 pixels
+	
+	# Fade out
+	tween.tween_property(damage_label, "modulate:a", 
+		0.0, 1.0)  # Fade out over 1 second
+	
+	# Delete after animation
+	await tween.finished
+	damage_label.queue_free()

@@ -2,7 +2,5 @@ res://main.tscn
 res://hud.tscn
 res://mob.tscn
 res://player.tscn
-res://main.gd
-res://mob.gd
 res://player.gd
 res://exp_bar.gd
