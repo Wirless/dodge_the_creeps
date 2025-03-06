@@ -8,3 +8,5 @@ res://main.gd
 res://mob.gd
 res://coin.gd
 res://coin.tscn
+res://hud.gd
+res://coin_sack.gd

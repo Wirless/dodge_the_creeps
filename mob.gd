@@ -7,7 +7,7 @@ var is_dead = false
 @export var damage = 5.0  # Each monster can have different damage
 var repulsion_active = false
 const Coin = preload("res://coin.tscn")
-var coin_drop_chance = 0.5  # 50% chance to drop a coin
+var coin_drop_chance = 1.0  # Changed to 100% for testing
 
 func _ready():
 	$AnimatedSprite2D.play()
@@ -96,11 +96,14 @@ func die():
 	if player:
 		player.gain_exp(1)
 	
-	# Spawn coin using scene
-	if randf() < coin_drop_chance:
-		var coin = Coin.instantiate()
-		coin.global_position = global_position
-		get_parent().add_child(coin)
+	# Debug coin spawn
+	print("Spawning coin at position: ", global_position)
+	var coin = Coin.instantiate()
+	coin.global_position = global_position
+	coin.modulate = Color(1, 1, 0, 1)  # Make sure it's yellow and visible
+	coin.z_index = 0  # Make sure it's visible
+	get_parent().add_child(coin)
+	print("Coin spawned with position: ", coin.global_position)
 	
 	hide()
 	queue_free()

@@ -2,6 +2,41 @@ extends CanvasLayer
 
 signal start_game
 
+var coins = 0
+
+func _ready():
+	add_to_group("hud")
+	# Create coin sack display
+	update_coin_display()
+
+func _draw_coin_sack():
+	var sack = $CoinSack
+	if !sack:
+		sack = Node2D.new()
+		sack.name = "CoinSack"
+		add_child(sack)
+		
+		# Position in bottom right
+		var screen_size = get_viewport().get_visible_rect().size
+		sack.position = Vector2(screen_size.x - 100, screen_size.y - 100)
+
+func update_coin_display():
+	# Create or update the coin counter
+	if !has_node("CoinCounter"):
+		var label = Label.new()
+		label.name = "CoinCounter"
+		label.text = str(coins)
+		# Position near bottom right
+		var screen_size = get_viewport().get_visible_rect().size
+		label.position = Vector2(screen_size.x - 80, screen_size.y - 90)
+		add_child(label)
+	else:
+		$CoinCounter.text = str(coins)
+
+func add_coins(amount):
+	coins += amount
+	update_coin_display()
+
 func show_message(text):
 	$MessageLabel.text = text
 	$MessageLabel.show()
