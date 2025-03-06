@@ -1,31 +1,31 @@
 extends Node2D
 
-@export var width = 50
-@export var height = 5
-@export var offset = Vector2(0, -30) # Offset from parent node
-
-var max_health = 100
-var current_health = 100
+var width = 50  # Default width of health bar
+var height = 4  # Default height of health bar
+var offset = Vector2(0, -30)  # Position above entity
 
 func _ready():
-	# Make sure we're drawn on top
-	z_index = 100
+	z_index = 1  # Ensure health bar appears above other elements
 
 func _draw():
-	# Draw background (gray)
-	draw_rect(Rect2(-width/2, -height/2, width, height), Color(0.2, 0.2, 0.2))
+	# Draw background (empty health bar)
+	draw_rect(Rect2(offset.x - width/2, offset.y, width, height), Color(0.2, 0.2, 0.2))
 	
-	# Calculate health percentage and color
-	var health_percent = current_health / max_health
-	var color = Color.from_hsv(health_percent * 0.3, 1.0, 1.0) # Green (0.3) to Red (0.0)
+	# Draw current health - calculate proper width based on percentage
+	var health_percentage = float(health) / float(max_health)
+	var health_width = width * health_percentage
 	
-	# Draw health bar
-	draw_rect(Rect2(-width/2, -height/2, width * health_percent, height), color)
+	if health > 0:
+		var health_color = Color(0, 1, 0)  # Green for health
+		draw_rect(Rect2(offset.x - width/2, offset.y, health_width, height), health_color)
 
-func update_health(current, maximum):
-	current_health = current
-	max_health = maximum
-	queue_redraw()
+func update_health(current_health, maximum_health):
+	health = current_health
+	max_health = maximum_health
+	queue_redraw()  # Redraw the health bar
+
+var health = 100
+var max_health = 100
 
 func _process(_delta):
 	# Update position to follow parent

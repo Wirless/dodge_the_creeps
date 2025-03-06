@@ -26,6 +26,7 @@ var current_exp = 0
 var exp_to_next_level = 125  # Initial exp needed for level 1->2
 var hit_counter = 0  # Track number of hits
 var base_attack_radius = 80.0  # Store the base attack radius
+@onready var attack_sound = preload("res://hit.ogg")
 
 func _ready():
 	screen_size = get_viewport_rect().size
@@ -64,6 +65,12 @@ func _ready():
 	
 	# Initialize health bar with correct values
 	$HealthBar.update_health(health, maxhealth)
+	
+	# Create audio player for attack sound
+	var audio_player = AudioStreamPlayer.new()
+	audio_player.name = "AttackSound"
+	audio_player.stream = attack_sound
+	add_child(audio_player)
 
 func _process(delta):
 	var velocity = Vector2.ZERO # The player's movement vector.
@@ -122,7 +129,7 @@ func start(pos):
 	can_take_damage = true
 	show()
 	$CollisionShape2D.disabled = false
-	$HealthBar.update_health(health, 100)
+	$HealthBar.update_health(health, maxhealth)
 	update_exp_bar()
 
 func _on_body_entered(body):
@@ -148,6 +155,9 @@ func take_damage(amount):
 		die()
 
 func perform_attack():
+	# Play attack sound
+	$AttackSound.play()
+	
 	# Increment hit counter
 	hit_counter += 1
 	
@@ -247,7 +257,6 @@ func die():
 	hit.emit()
 	$CollisionShape2D.set_deferred("disabled", true)
 
-# Add a heal function if needed
 func heal(amount):
 	if is_dead:
 		return

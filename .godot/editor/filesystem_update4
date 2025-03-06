@@ -4,3 +4,4 @@ res://mob.tscn
 res://player.tscn
 res://player.gd
 res://exp_bar.gd
+res://health_bar.gd
