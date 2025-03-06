@@ -6,6 +6,8 @@ var is_dead = false
 @export var chase_speed = 150.0  # Fixed speed for chasing player
 @export var damage = 5.0  # Each monster can have different damage
 var repulsion_active = false
+const Coin = preload("res://coin.tscn")
+var coin_drop_chance = 0.5  # 50% chance to drop a coin
 
 func _ready():
 	$AnimatedSprite2D.play()
@@ -90,10 +92,16 @@ func take_damage(amount):
 
 func die():
 	is_dead = true
-	# Give experience to player
 	var player = get_node("/root/Main/Player")
 	if player:
-		player.gain_exp(1)  # Give 1 exp per mob kill
+		player.gain_exp(1)
+	
+	# Spawn coin using scene
+	if randf() < coin_drop_chance:
+		var coin = Coin.instantiate()
+		coin.global_position = global_position
+		get_parent().add_child(coin)
+	
 	hide()
 	queue_free()
 

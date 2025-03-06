@@ -334,8 +334,8 @@ func level_up():
 	exp_to_next_level = int(exp_to_next_level * 1.1)  # 10% increase per level
 
 func update_exp_bar():
-	# Find ExpBar in the main scene instead of as child
-	var exp_bar = get_tree().get_root().get_node("Main/ExpBar")
+	# Find ExpBar in the main scene
+	var exp_bar = get_tree().get_root().get_node_or_null("Main/ExpBar")
 	if exp_bar:
 		exp_bar.update_exp(current_exp, exp_to_next_level, current_level)
 

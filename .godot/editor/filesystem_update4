@@ -5,3 +5,6 @@ res://mob.tscn
 res://player.tscn
 res://player.gd
 res://main.gd
+res://mob.gd
+res://coin.gd
+res://coin.tscn
