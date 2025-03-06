@@ -38,10 +38,7 @@ func _ready():
 	add_child(health_bar)
 	health_bar.name = "HealthBar"
 	
-	# Create exp bar
-	var exp_bar = preload("res://exp_bar.gd").new()
-	add_child(exp_bar)
-	exp_bar.name = "ExpBar"
+	# Get the existing ExpBar from the main scene
 	update_exp_bar()
 	
 	# Create attack area if it doesn't exist
@@ -334,13 +331,13 @@ func gain_exp(amount):
 func level_up():
 	current_exp -= exp_to_next_level
 	current_level += 1
-	# Increase exp needed for next level by 10%
-	exp_to_next_level = int(exp_to_next_level * 1.1)
-	# Could add level up effects/bonuses here
+	exp_to_next_level = int(exp_to_next_level * 1.1)  # 10% increase per level
 
 func update_exp_bar():
-	if has_node("ExpBar"):
-		$ExpBar.update_exp(current_exp, exp_to_next_level, current_level)
+	# Find ExpBar in the main scene instead of as child
+	var exp_bar = get_tree().get_root().get_node("Main/ExpBar")
+	if exp_bar:
+		exp_bar.update_exp(current_exp, exp_to_next_level, current_level)
 
 # Add this new function for damage numbers
 func spawn_damage_number(amount):

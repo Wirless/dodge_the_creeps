@@ -1,9 +1,7 @@
+res://exp_bar.gd
 res://main.tscn
 res://hud.tscn
 res://mob.tscn
 res://player.tscn
 res://player.gd
-res://exp_bar.gd
-res://health_bar.gd
-res://mob.gd
 res://main.gd

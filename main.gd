@@ -3,6 +3,12 @@ extends Node
 @export var mob_scene: PackedScene
 var score
 
+func _ready():
+	# Create exp bar at game start
+	var exp_bar = preload("res://exp_bar.gd").new()
+	add_child(exp_bar)
+	exp_bar.name = "ExpBar"
+
 func game_over():
 	$ScoreTimer.stop()
 	$MobTimer.stop()
@@ -18,7 +24,12 @@ func new_game():
 	$HUD.update_score(score)
 	$HUD.show_message("Get Ready")
 	$Music.play()
-
+	
+	# Make sure ExpBar exists and is updated
+	if !has_node("ExpBar"):
+		var exp_bar = preload("res://exp_bar.gd").new()
+		add_child(exp_bar)
+		exp_bar.name = "ExpBar"
 
 func _on_MobTimer_timeout():
 	# Create a new instance of the Mob scene.
