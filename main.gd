@@ -33,21 +33,26 @@ func _on_MobTimer_timeout():
 	
 	# Check if spawn position is too close to other mobs
 	var can_spawn = true
-	for existing_mob in get_tree().get_nodes_in_group("mobs"):
-		if existing_mob.position.distance_to(spawn_position) < 30:  # Increased spawn separation
-			can_spawn = false
+	var spawn_attempts = 0
+	var max_attempts = 5
+	
+	while spawn_attempts < max_attempts:
+		can_spawn = true
+		for existing_mob in get_tree().get_nodes_in_group("mobs"):
+			if existing_mob.position.distance_to(spawn_position) < 50:  # Increased to 50 pixels
+				can_spawn = false
+				# Try a different position on the path
+				mob_spawn_location.progress = randi()
+				spawn_position = mob_spawn_location.position
+				break
+		
+		if can_spawn:
 			break
+		
+		spawn_attempts += 1
 	
 	if can_spawn:
 		mob.position = spawn_position
-		
-		# Set initial velocity towards player, considering other mobs
-		var player = get_node("Player")
-		if player:
-			var direction = (player.position - spawn_position).normalized()
-			mob.linear_velocity = direction * mob.chase_speed
-		
-		# Spawn the mob
 		add_child(mob)
 	else:
 		mob.queue_free()

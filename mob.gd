@@ -13,6 +13,13 @@ func _ready():
 	$AnimatedSprite2D.animation = mob_types.pick_random()
 	add_to_group("mobs") # Add mob to group for collision detection
 	
+	# Physics settings
+	freeze = false
+	gravity_scale = 0
+	linear_damp = 1.0
+	contact_monitor = true
+	max_contacts_reported = 4
+	
 	# Create health bar
 	var health_bar = preload("res://health_bar.gd").new()
 	add_child(health_bar)
@@ -20,13 +27,6 @@ func _ready():
 	health_bar.width = 30 # Smaller width for mobs
 	health_bar.offset = Vector2(0, -20) # Adjust offset for mobs
 	health_bar.update_health(health, max_health)
-	
-	# Change physics mode to enable controlled movement
-	freeze = false
-	gravity_scale = 0
-	linear_damp = 1.0
-	contact_monitor = true
-	max_contacts_reported = 4
 	
 	# Randomize damage slightly for each monster instance
 	damage = randf_range(4.0, 6.0)  # Random damage between 4-6
@@ -39,35 +39,39 @@ func _physics_process(_delta):
 	if !player:
 		return
 	
-	# Calculate direction to player
-	var direction_to_player = (player.global_position - global_position).normalized()
-	var final_velocity = direction_to_player * chase_speed
-	
-	# Get all nearby mobs and calculate avoidance
+	# First, handle mob separation
+	var separation_force = Vector2.ZERO
 	var nearby_mobs = get_tree().get_nodes_in_group("mobs")
-	var avoidance_force = Vector2.ZERO
 	
 	for other_mob in nearby_mobs:
-		if other_mob != self:
-			var to_other = global_position.direction_to(other_mob.global_position)
-			var distance = global_position.distance_to(other_mob.global_position)
+		if other_mob != self and is_instance_valid(other_mob) and !other_mob.is_dead:
+			var to_other = global_position - other_mob.global_position
+			var distance = to_other.length()
 			
-			if distance < 15:  # If closer than desired separation
-				# Calculate avoidance vector (stronger when closer)
-				var avoidance = -to_other * (15.0 / max(distance, 1.0)) * chase_speed
-				avoidance_force += avoidance
+			if distance < 50:  # Increased to 50 pixel separation
+				# Strong separation force when too close
+				var separation = to_other.normalized() * (50 - distance) * 20
+				separation_force += separation
+				
+				# Immediate position correction if extremely close
+				if distance < 40:  # Also increased
+					global_position += to_other.normalized() * (50 - distance)
 	
-	# If there are mobs to avoid, adjust the velocity
-	if avoidance_force != Vector2.ZERO:
-		# Normalize avoidance force and scale it
-		avoidance_force = avoidance_force.normalized() * chase_speed
-		
-		# Blend between direct path to player and avoidance
-		# More weight to avoidance when very close to other mobs
-		var blend_factor = clamp(avoidance_force.length() / chase_speed, 0.0, 1.0)
-		final_velocity = final_velocity.lerp(avoidance_force, blend_factor)
+	# Then handle player chasing
+	var to_player = player.global_position - global_position
+	var direction_to_player = to_player.normalized()
 	
-	# Apply the final movement
+	# Combine forces
+	var final_velocity = Vector2.ZERO
+	
+	if separation_force.length() > 0:
+		# Prioritize separation when too close to other mobs
+		final_velocity = separation_force.normalized() * chase_speed * 2
+	else:
+		# Normal chase behavior when not too close to others
+		final_velocity = direction_to_player * chase_speed
+	
+	# Set the final velocity
 	linear_velocity = final_velocity
 	
 	# Update sprite direction
@@ -98,11 +102,8 @@ func die():
 #     queue_free()
 
 func apply_repulsion(repel_vector):
-	if repel_vector.length() > 0:
-		global_position += repel_vector
-		repulsion_active = true
-		await get_tree().create_timer(0.1).timeout
-		repulsion_active = false
+	global_position += repel_vector
+	linear_velocity += repel_vector * 2
 
 # Add collision handling
 func _on_body_entered(body):
