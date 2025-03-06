@@ -2,7 +2,7 @@ extends Node2D
 
 var width = 500  # Width of exp bar
 var height = 30  # Height of exp bar
-var margin_bottom = 50  # Margin from bottom of screen
+var margin_top = 50  # Margin from top of screen (instead of bottom)
 
 func _ready():
 	z_index = 100  # Ensure it's drawn on top
@@ -11,10 +11,10 @@ func _ready():
 func update_position():
 	# Get screen size and set position
 	var screen_size = get_viewport_rect().size
-	# Position at bottom center of screen
+	# Position at top center of screen
 	global_position = Vector2(
 		screen_size.x/2 - width/2,  # Center horizontally
-		screen_size.y - margin_bottom - height  # Position from bottom
+		margin_top  # Position from top
 	)
 
 func _draw():
